@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
-const {createMeeting, getAllFromDatabase, getFromDatabaseById, addToDatabase, deleteFromDatabasebyId, deleteAllFromDatabase} = require('./server/db.js');
+const checkMillionDollarIdea = require('./server/checkMillionDollarIdea.js');
+const {createMeeting, getAllFromDatabase, getFromDatabaseById, addToDatabase, deleteFromDatabasebyId, deleteAllFromDatabase, updateInstanceInDatabase} = require('./server/db.js');
 module.exports = app;
 
 /* Do not change the following line! It is required for testing and allowing
@@ -32,9 +33,9 @@ apiRouter.get('/minions/', (req, res, next) => {
 
 apiRouter.post('/minions/', (req, res, next) => {
   const newMinion = req.body;
-  if (newMinion.salary && newMinion.title && newMinion.name && newMinion.weaknesses){
-    newMinion.salary = Number(newMinion.salary);
-    const newMinionWId = addToDatabase('minions', newMinion);
+  newMinion.salary = Number(newMinion.salary);
+  const newMinionWId = addToDatabase('minions', newMinion);
+  if (newMinionWId){
     res.status(201).send(newMinionWId);
   } else {
     res.status(400).send();
@@ -48,22 +49,23 @@ apiRouter.get('/minions/:minionId/', (req, res, next) => {
     res.status(404).send();
   }
 });
+
 apiRouter.put('/minions/:minionId/', (req, res, next) => {
   let updatedMinion = req.body;
-  if (updatedMinion.name && updatedMinion.title && updatedMinion.salary && updatedMinion.weaknesses){
-    updatedMinion.salary = Number(updatedminion.salary);
-    updatedMinion = updateInstanceInDatabase('minions', updatedMinion);
-    if (updatedMinion){
-      return res.status(201).send(updatedMinion);
-    } 
+  updatedMinion.salary = Number(updatedMinion.salary);
+  updatedMinion = updateInstanceInDatabase('minions', updatedMinion);
+  if (updatedMinion){
+    return res.status(201).send(updatedMinion);
+  } else {
+    res.status(404).send();
   }
-  res.status(404).send();
 });
+
 apiRouter.delete('/minions/:minionId/', (req, res, next) => {
-  const id = Number(req.params.minionId);
+  const id = req.params.minionId
   const deleted = deleteFromDatabasebyId('minions', id);
   if (deleted) {
-    res.status(200).send();
+    res.status(204).send();
   } else {
     res.status(404).send();
   }
@@ -75,17 +77,18 @@ apiRouter.get('/ideas/', (req, res, next) => {
   res.send(ideas);
 });
 
-apiRouter.post('/ideas/', (req, res, next) => {
+apiRouter.post('/ideas/',checkMillionDollarIdea, (req, res, next) => {
   const newIdea = req.body;
-  if (newIdea.name && newIdea.description && newIdea.weeklyRevenue && newIdea.numWeeks){
-    newIdea.numWeeks = Number(newIdea.numWeeks);
-    newIdea.weeklyRevenue = Number(newIdea.weeklyRevenue);
-    const newIdeaWId = addToDatabase('ideas', newIdea);
+  newIdea.numWeeks = Number(newIdea.numWeeks);
+  newIdea.weeklyRevenue = Number(newIdea.weeklyRevenue);
+  const newIdeaWId = addToDatabase('ideas', newIdea);
+  if (newIdeaWId){
     res.status(201).send(newIdeaWId);
   } else {
     res.status(400).send();
   }
 });
+
 apiRouter.get('/ideas/:ideaId/', (req, res, next) => {
   const idea = getFromDatabaseById('ideas', req.params.ideaId);
   if(idea){
@@ -94,23 +97,23 @@ apiRouter.get('/ideas/:ideaId/', (req, res, next) => {
     res.status(404).send();
   }
 });
+
 apiRouter.put('/ideas/:ideaId/', (req, res, next) => {
   let updatedIdea = req.body;
-  if (updatedIdea.name && updatedIdea.description && updatedIdea.weeklyRevenue && updatedIdea.numWeeks){
-    updatedIdea.weeklyRevenue = Number(updatedIdea.weeklyRevenue);
-    updatedIdea.numWeeks = Number(updatedIdea.numWeeks);
-    updatedIdea = updateInstanceInDatabase('ideas', updatedIdea);
-    if (updatedIdea){
-      return res.status(201).send(updatedIdea);
-    } 
+  updatedIdea = updateInstanceInDatabase('ideas', updatedIdea);
+
+  if (updatedIdea){
+    return res.status(201).send(updatedIdea);
+  } else {
+    res.status(404).send();
   }
-  res.status(404).send();
 });
+
 apiRouter.delete('/ideas/:ideaId/', (req, res, next) => {
-  const id = Number(req.params.ideaId);
+  const id = req.params.ideaId;
   const deleted = deleteFromDatabasebyId('ideas', id);
   if (deleted) {
-    res.status(200).send();
+    res.status(204).send();
   } else {
     res.status(404).send();
   }
@@ -123,12 +126,13 @@ apiRouter.get('/meetings/', (req, res, next)=> {
   res.send(meetings);
 });
 apiRouter.post('/meetings/', (req, res, next) => {
-  const newMeeting = createMeeting();
-  res.send(newMeeting);
+  let newMeeting = createMeeting();
+   newMeeting = addToDatabase('meetings', newMeeting);
+  res.status(201).send(newMeeting);
 });
 apiRouter.delete('/meetings/', (req, res, next) => {
   deleteAllFromDatabase('meetings');
-  res.status(200).send();
+  res.status(204).send();
 });
 
 
