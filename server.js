@@ -70,6 +70,68 @@ apiRouter.delete('/minions/:minionId/', (req, res, next) => {
     res.status(404).send();
   }
 });
+
+// Routes for api/minions/:minionId/work
+apiRouter.get('/minions/:minionId/work', (req, res, next) => {
+  const minionId = req.params.minionId;
+  const works = getAllFromDatabase('work');
+  const work = works.filter( work => {
+    return work.minionId === minionId;
+  })
+  if (work.length > 0) {
+    return res.status(200).send(work);
+  }
+  res.status(404).send();
+});
+
+apiRouter.post('/minions/:minionId/work', (req, res, next) => {
+  let work  = req.body;
+  if(work.minionId !== req.params.minionId){
+    return res.status(400).send();
+  }
+  let minions = getAllFromDatabase('minions');
+  const minion = minions.find( minion => {
+    return minion.id === req.params.minionId;
+  });
+  if (minion){
+    work = addToDatabase('work', work);
+    res.status(201).send(work);
+  } else {
+    res.status(404).send();
+  }
+  
+});
+
+apiRouter.put('/minions/:minionId/work/:workId', (req, res, next) => {
+  const work = req.body;
+  const minions = getAllFromDatabase('minions');
+  
+  if(isNaN(Number(req.params.workId))){
+    return res.status(404).send();
+  }
+  let foundMinion = minions.find(minion => {
+    return minion.id === work.minionId;
+  });
+  if (!foundMinion){
+    return res.status(400).send();
+  }
+  const updatedWork = updateInstanceInDatabase('work', work);
+  if (updatedWork){
+    res.status(200).send(updatedWork);
+  }else {
+    res.status(404).send();
+  }
+});
+
+apiRouter.delete('/minions/:minionId/work/:workId', (req, res, next) => {
+  const deleted = deleteFromDatabasebyId('work', req.params.workId);
+  if (deleted){
+    res.status(204).send();
+  } else {
+    res.status(404).send();
+  }
+});
+
 // Routes for api/ideas/
 
 apiRouter.get('/ideas/', (req, res, next) => {
