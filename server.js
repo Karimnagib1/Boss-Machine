@@ -105,8 +105,12 @@ apiRouter.post('/minions/:minionId/work', (req, res, next) => {
 apiRouter.put('/minions/:minionId/work/:workId', (req, res, next) => {
   const work = req.body;
   const minions = getAllFromDatabase('minions');
-  
-  if(isNaN(Number(req.params.workId))){
+  const allWork = getAllFromDatabase('work');
+  const foundWork = allWork.find(w => {
+    return w.id === work.id;
+  })
+
+  if(isNaN(Number(req.params.workId)) || !foundWork){
     return res.status(404).send();
   }
   let foundMinion = minions.find(minion => {
